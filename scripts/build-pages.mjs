@@ -6,6 +6,6 @@ for(const name of await readdir(new URL('public/',root)))await copyFile(new URL(
 await writeFile(new URL('docs/.nojekyll',root),'');
 const html=await readFile(new URL('docs/index.html',root),'utf8');
 assert(!/(?:src|href)="\/(?!\/)/.test(html),'Pages assets must use relative paths');
-assert(html.includes('./app.js')&&html.includes('./style.css'));
+assert(html.includes('./app.js?')&&html.includes('./style.css?'));
 assert((await readFile(new URL('docs/app.js',root),'utf8')).includes("./ai.js"));
 console.log('Built and checked GitHub Pages files in docs/');

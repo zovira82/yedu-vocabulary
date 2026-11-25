@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {parseText,normalizeWords,schedule,recognize} from '../public/core.js';
 import {organize} from '../worker/index.js';
 import {organizeDirect} from '../public/ai.js';
+import {loadApiSettings,saveApiSettings} from '../public/settings.js';
 assert.equal(parseText('| 单词 | 释义 | 例句 |\n| --- | --- | --- |\n| persist | 坚持 | It persists. |\n| PERSIST | 持续 | |').length,1);
 assert.equal(parseText('1. **scenario**：n. 情景')[0].word,'scenario');
 assert.equal(parseText('{"words":[{"word":"take into account","meaning":"考虑"}]}')[0].word,'take into account');
@@ -29,3 +30,10 @@ await assert.rejects(()=>organizeDirect({text:'word',key:'test-memory-only-key',
 await assert.rejects(()=>organizeDirect({text:'word',key:'test-memory-only-key',model:'deepseek-flash'},async()=>Response.json({choices:[{finish_reason:'length'}]})),/不完整/);
 await assert.rejects(()=>organizeDirect({text:'word',key:'test-memory-only-key',model:'deepseek-flash'},async()=>Response.json({choices:[{message:{content:'not JSON'}}]})),/有效词表/);
 console.log('GitHub Pages direct API destination, request, validation and error checks passed');
+const storageData=new Map(),storage={getItem:k=>storageData.get(k)??null,setItem:(k,v)=>storageData.set(k,v),removeItem:k=>storageData.delete(k)};
+assert.deepEqual(loadApiSettings(storage),{key:'',model:'deepseek-flash'});
+saveApiSettings(storage,{key:'test-refresh-persistence',model:'deepseek-flash'});
+assert.deepEqual(loadApiSettings(storage),{key:'test-refresh-persistence',model:'deepseek-flash'});
+saveApiSettings(storage,{key:'',model:'deepseek-flash'});assert.equal(storageData.size,0);
+assert.throws(()=>saveApiSettings({setItem(){throw Error('blocked');}},{key:'test-key',model:'deepseek-flash'}),/blocked/);
+console.log('API setting persistence, removal and storage failure checks passed');
